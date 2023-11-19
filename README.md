@@ -63,6 +63,19 @@ pip install torch
 
 ### Float8|e5m2 
 to support float8 use https://github.com/ahmad-mirsalari/PyTorch_E5M2 
+
+Navigate to the root directory of the modified PyTorch codebase in the terminal or command prompt.
+Run the following command to install PyTorch in editable mode:
+~~~~~shell
+pip install -e .
+~~~~~
+The . at the end indicates that the current directory should be installed in editable mode.
+
+Once the installation is complete, you can import the modified version of PyTorch in your Python code just like you would with the regular PyTorch library:
+~~~~~shell
+import torch
+~~~~~
+This will import the modified version of PyTorch that you installed in editable mode.
 #### PULP-SDK
 These tests requires the [PULP-SDK](https://github.com/pulp-platform/pulp-sdk). Once you cloned the PULP-SDK repository and you have the [RISC-V GNU Compiler Toolchain](https://github.com/pulp-platform/pulp-riscv-gnu-toolchain) installed, you need to compile [GVSOC](https://github.com/pulp-platform/pulp-sdk#gvsoc). **Please refer to the links to correctly setup your working environment.**
 
