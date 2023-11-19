@@ -60,6 +60,9 @@ These golden models are built on top of PyTorch data types. The following packag
 ~~~~~shell
 pip install torch 
 ~~~~~
+
+### Float8|e5m2 
+to support float8 use https://github.com/ahmad-mirsalari/PyTorch_E5M2 
 #### PULP-SDK
 These tests requires the [PULP-SDK](https://github.com/pulp-platform/pulp-sdk). Once you cloned the PULP-SDK repository and you have the [RISC-V GNU Compiler Toolchain](https://github.com/pulp-platform/pulp-riscv-gnu-toolchain) installed, you need to compile [GVSOC](https://github.com/pulp-platform/pulp-sdk#gvsoc). **Please refer to the links to correctly setup your working environment.**
 
