@@ -8,6 +8,11 @@ import torch
 import scipy.io
 import argparse
 
+'''
+If you are working offline in local computer, just set folder_addr to '.' or absolute address of project folder in your computer, 
+but if you are working in online, you may set folder_addr to the path of the project in the Internet.
+'''
+folder_addr = "."
 
 
 def save_data_into_hfile(R, N, M, I, epoch, inp, ref, som, test, score):
@@ -66,62 +71,6 @@ def write_matrix(matrix_to_write, name, file_pointer, R, float_type):
     file_pointer.write("};\n")
 
 
-def find_dividable(a, b):
-    for i in range(b, 0, -1):
-        if (a % i) == 0:
-            return i
-
-
-def memory_estimation(N, M, I, S, data_type):
-    # N : Neurons
-    # M : Features
-    # I : Input_Size
-    # S : Number of SOMs
-    Kb = 1024
-    L1 = 56 * Kb  # L1 in Bytes
-    # Define number of bytes per float
-    if data_type == torch.float32:
-        data_size = 4
-    elif data_type == torch.float16 or data_type == torch.bfloat16:
-        data_size = 2
-
-    Weights = N * M * data_size  # Memory  for only one SOM(Weights) in bytes
-
-    # calculate the memory for S SOMs
-    SOMs_b = S * Weights
-    SOMs_kb = SOMs_b / 1024
-    print("Weight Mem for %s SOM is: %s Bytes(%s KB)" % (S, SOMs_b, SOMs_kb))
-    Inputs = I * M * data_size * S  # Memory for only input in Bytes
-    Inputs_kb = SOMs_b / 1024
-    print("Mem for %s Input is: %s Bytes(%s KB)" % (S, Inputs, Inputs_kb))
-    for i in range(3, int(math.log2(N)) + 1):
-        print("---------------------- Config Number %s -------------------" % i)
-        w_number = int(pow(2, i))  # number of weights for each block (only one SOM)
-        w_memory = w_number * M * data_size  # weight memory for one block(only one SOM)
-        w_memory_soms = w_memory * S  # weight memory for s Soms (S SOMs)
-        w_memory_soms_db = w_memory_soms * 2  # enable double buffering
-
-        print(" ----------------- Weights--------------------")
-        print(
-            "L1 block for double buffering: %s -> dividing by 2(double buffering): %s -> each SOM: %s -> Number: %s" % (
-                w_memory_soms_db, w_memory_soms, w_memory, w_number))
-        Avb_L1 = L1 - w_memory_soms_db  # Available L1 in Bytes
-
-        # calculate the number of input for each SOM
-        N_input_all = int(Avb_L1 / (M * data_size))  # all soms
-        N_input_db = int(N_input_all / (S))  # for each SOM: we have S input dataset with M features,
-        # enabling double buffering, 2 is for double buffering
-        N_input_som = int(N_input_db / 2)  # we must copy N_input from each dataset with double buffering
-
-        z = find_dividable(I, N_input_som)
-        print(
-            "Available L1: %s -> it is enough for %s inputs -> we have %s dataset: %s -> we use double buffering: %s, "
-            "it should be dividable: %s " % (
-                Avb_L1, N_input_all, S, N_input_db, N_input_som, z))
-
-    return z, w_number
-
-
 def relative_absolute_error(true, pred):
     true_mean = torch.mean(true)
     squared_error_num = torch.sum(torch.abs(true - pred))
@@ -144,9 +93,8 @@ def matrix_init(IN, dt):
     for i in range(IN.shape[0]):
         # iterate through columns of IN
         for j in range(IN.shape[1]):
-            #print("init value is",IN[i][j])
             temp[i][j] = IN[i][j]
-            #print("convet value is",temp[i][j])
+           
             
     return temp
 
@@ -266,7 +214,7 @@ def random_slice(Input, Input_length, slice_length):
 
 
 def read_data(index, size_data, slice_length, enc_bits, dt):
-    mat = scipy.io.loadmat('bacteria.' + str(index) + '.short.mat')
+    mat = scipy.io.loadmat(folder_addr + '/dataset/'+'bacteria.' + str(index) + '.short.mat')
     mat = str(mat['var_data_short'])
     arr = mat[mat.find("['") + 2:mat.find("']")]
     train = list(arr)
@@ -293,15 +241,11 @@ def check_all_float(datatypes):#if all data types are float32
 
 
 def find_BMU(SOM, x, dt, vec_flag='false'):
-    # print("input", x)
-    # print("SOM", SOM)
 
     if check_all_float(dt): # if all data types are float32 we can use the python default functions
         distSq = (torch.abs(SOM - x)).sum(dim=1)
-        # print("distSq is %s" %(distSq))
         return torch.argmin(distSq, dim=None)
     else:
-        # print("I am here ")
         if vec_flag == 'false':
             temp = torch.zeros(SOM.shape[0], dtype= dt[2])
             diff = torch.zeros(SOM.shape[0], dtype= dt[2])
@@ -313,41 +257,25 @@ def find_BMU(SOM, x, dt, vec_flag='false'):
                     som_ij = SOM[i,j].type(dt[2])
                     x_j = x[j].type(dt[2])
                     diff = (torch.abs(som_ij - x_j))
-                    #print(f"som  is {som_ij.item()} x  is {x_j.item()}, diff is {diff.item()}")
-                    #diff = diff.type(torch.float32)
                     temp[i] += diff
-                    #print("temp is %s i is %s" %(temp[i].item(), i))
             return torch.argmin(temp, dim=None)
-        else:
-            #print("I am here sfsdfs")
-            if (dt[0] == torch.float8):
-                temp = torch.zeros(SOM.shape[0], dtype=dt[2])
-                for i in range(SOM.shape[0]):
-                    temp1 = torch.zeros(1, dtype=dt[2])
-                    temp2 = torch.zeros(1, dtype=dt[2])
-                    temp3 = torch.zeros(1, dtype=dt[2])
-                    temp4 = torch.zeros(1, dtype=dt[2])
-                    for j in range(0,SOM.shape[1],4):
-                        temp1 += (torch.abs(SOM[i, j] - x[j]))
-                        temp2 += (torch.abs(SOM[i, j+1] - x[j+1]))
-                        temp3 += (torch.abs(SOM[i, j+2] - x[j+2]))
-                        temp4 += (torch.abs(SOM[i, j+3] - x[j+3]))
-                        #temp[i] += (torch.abs(SOM[i, j] - x[j]))
-                    temp[i] = temp1 + temp2 + temp3 + temp4
-                    #print("temp is %s i is %s" %(temp[i].item(), i))
-                return torch.argmin(temp, dim=None)
+        else: #Vectorial mode
+            if dt[0] == torch.float8:
+              vec_step = 4
             else:
-                temp = torch.zeros(SOM.shape[0], dtype=dt[2])
-                for i in range(SOM.shape[0]):
-                    temp1 = torch.zeros(1, dtype=dt[2])
-                    temp2 = torch.zeros(1, dtype=dt[2])
-                    for j in range(0,SOM.shape[1],2):
-                        temp1 += (torch.abs(SOM[i, j] - x[j]))
-                        temp2 += (torch.abs(SOM[i, j+1] - x[j+1]))
-                        #temp[i] += (torch.abs(SOM[i, j] - x[j]))
-                    temp[i] = temp1 + temp2
-                    # print("temp is %s i is %s" %(temp[i].item(), i))
-                return torch.argmin(temp, dim=None)
+              vec_step = 2
+            temp = torch.zeros(SOM.shape[0], dtype=dt[2])
+            temp1 = torch.zeros(vec_step , dtype=dt[2])
+            for i in range(SOM.shape[0]):
+              for k in range(vec_step):
+                temp1[k] = 0
+              for j in range(0,SOM.shape[1],vec_step):
+                for k in range(vec_step):
+                  temp1[k] += (torch.abs(SOM[i, j+k] - x[j+k]))
+                
+              for k in range(vec_step):
+                temp[i] += temp1[k] 
+            return torch.argmin(temp, dim=None)
 
 
 # Update the weights of the SOM cells when given a single training example
@@ -356,64 +284,30 @@ def update_weights(SOM, train_ex, beta, g, dt, mac_flag):
     # Change all cells in a neighborhood of BMU
     N = SOM.shape[0]
     M = SOM.shape[1]
-
-    # power_temp = torch.zeros(1, dtype=dt)
-    # dist_func = torch.zeros(M, dtype=dt)
     for i in range(N):
 
         dist = (N / 2) - torch.abs(torch.abs(i - g) - (N / 2))
-
-        # print("i is ", i)
-        # print("beta is %s , dist is %s "%(beta, dist))
         power = (torch.pow(2, dist))
-        #power = 1 << dist
-        #
-        # if abs(power) > (2 ** 63 - 1):
-        #     # print("overflow for i= %s dis is %s power is %s " %(i, dist, power))
-        #     continue
-        # print("power", power)
-        # print("update for N= is %s dist %s , power %s" % (i, dist, power))
-        # print("dist is ", dist.item())
-        # power = power.type(dt)
-        # print("power", power)
-        # beta = beta.type(torch.float32)
-        # power = power.type(torch.float32)
         power_temp = (beta / power)
-        # print(f"power_temp {power_temp.dtype}")
-        #power_temp = power_temp.type(dt[2])#comment this line
-        #print(dt)
         if ((dt[1] == torch.float16 and dist > 14 ) or (dt[1]==torch.bfloat16) and dist > 19) or ((dt[1] == torch.float32) and dist > 19) or ((dt[1] == torch.float8) and dist > 14):#if abs(power_temp) < torch.finfo(dt).eps or dist > 15:  # if abs(power) > (2 ** 31 - 1):  # abs(power) > (1 << 31) - 1)
             # https://stackoverflow.com/questions/45528637/checking-integer-overflow-in-python
             # print("underflow!!")
             continue
-
-        #print(f"i is {i}, beta is {beta}, dis is {dist}, power is {power}, powertemp is {power_temp}")
         for j in range(M):
             som_ij = torch.tensor(0, dtype= dt[2])
             x_j = torch.tensor(0, dtype= dt[2])
             som_ij = SOM[i,j].type(dt[2])
             x_j = train_ex[j].type(dt[2])
             a = (som_ij - x_j)
-            #a = a.type(dt[2])#comment this line
             temp = som_ij
             if mac_flag == 'true':
                 a = a.type(torch.float32)
                 power_temp = power_temp.type(torch.float32)
                 temp = temp.type(torch.float32)
             temp -= power_temp * a
-
-            #print(f"temp {temp.item()} ")
-            # print("mult is ", (power_temp * a).item())
-            # print("temp is ", temp.item())
             if mac_flag == 'true':
                 temp = temp.type(dt[1])
-            #print(f"j is {j},  som is {SOM[i,j].item()} [before updating]")
             SOM[i, j] = temp
-            #print(f"j is {j},  som is {SOM[i,j].item()} [after updating]")
-            # print(f"som {SOM[i,j].dtype}, temp {temp.dtype} ")
-            # print("j is %s, after update som is %s "%( j, SOM[i, j].item()))
-        # dist_func = power_temp * (SOM[i, :] - train_ex)
-        # SOM[i, :] -= dist_func
 
     return SOM
 
@@ -429,15 +323,10 @@ def train_SOM(SOM, train_data, dt, epochs=10, mac_flag='false', vec_flag='false'
         # rand_index = torch.randperm(len(train_data))
         # train_data = copy.deepcopy(train_data[rand_index])
         for train_ex in train_data:
-            #print("x is ", train_ex)
             g = find_BMU(SOM, train_ex, dt, vec_flag)
-            # if print_flag == 'true':
-            #print("location is ",g.item())
             SOM = update_weights(SOM, train_ex, beta, g, dt, mac_flag)
             # Update beta
             beta = max(beta * decay_factor, beta_min)
-            #beta = beta.type(torch.float32)
-            #print(f"beta is {beta}")
     return SOM
 
 def test (N, M, R, slice_length, enc_bits,size_data_test, SOMs_res,dt ):
@@ -457,35 +346,23 @@ def test (N, M, R, slice_length, enc_bits,size_data_test, SOMs_res,dt ):
          score[i,j] = inference_SOM(SOM, test_data, dt)
          
       
-    #print("Final Scores: \n", score)
-    #print("The target(true) DNA is %d \nThe pre SOM is %d " % (test_DNA, np.argmin(score, axis=1)))
     C_false = sum(x != y for x, y in zip(test_DNA, np.argmin(score, axis=1)))
     print("Number of differences:", C_false)
     print("Classification error:", (C_false / test_itr) * 100)
     differences = [(i, x, y) for i, (x, y) in enumerate(zip(test_DNA, np.argmin(score, axis=1))) if x != y]
 
-    '''print("Indices of differences:")
-    for index, value1, value2 in differences:
-      print(f"Index: {index}, correct DNA: {value1}, predict class: {value2}")'''
 
 def inference_SOM(SOM, test_data, dt):
     temp = torch.tensor(0, dtype=dt[2])
     error = torch.tensor(0, dtype=dt[2])
-    # SOM=SOM.type(torch.float32)
     distSq = torch.tensor(0, dtype=dt[2])
-
 
     for test_ex in test_data:
         SOM = SOM.type(dt[2])
         test_ex = test_ex.type(dt[2])
         distSq = (torch.abs(SOM - test_ex)).sum(dim=1)
-        # print("INPUT", test_ex)
-        # print("distSq",distSq)
-        # print("distSq", distSq.min())
         error = distSq.min()
         temp += error
-        #print("temp", temp, temp.dtype)
-
     return temp
 
 
@@ -495,23 +372,18 @@ def merge_mats(L_mats, S_mat, N, M, idx):
     for i in range(N):
         for j in range(M):
             L_mats[(idx * N * M) + (i * M) + j] = S_mat[i, j]
-            # print("new data in the lcation of  %s , i %s j %s, val %s "%( (idx * N * M) + (i * M) + j ,i,j, SOM[i,j]))
     return L_mats
 
 def split_soms(SOMs, N, M, idx):
     SOM = torch.zeros(N,M)
-    #print(f"start index {(idx * N * M)}")
     for i in range(N):
         for j in range(M):
-
             SOM[i, j] = SOMs[(idx * N * M) + (i * M) + j]
-            # print("new data in the lcation of  %s , i %s j %s, val %s "%( (idx * N * M) + (i * M) + j ,i,j, SOM[i,j]))
+
     return SOM
 
 def quantization_error(true, pred):
-    # print(f" true dim {true.shape}")
     all_diff = torch.divide(torch.abs(true - pred),true)
-    # print(f" all_diff dim {all_diff.shape}")
     return (torch.mean(all_diff)) * 100
     
    
@@ -537,10 +409,6 @@ def task_dna():
     for i in range(0, R):
         print(f"Training of the SOM {i} is started")
 
-        # Load the i_th train dataset
-        # train = pd.read_csv('train_data_DNA' + str(i) + '.csv', header=None)
-        # train = np.asarray
-
         # load data in fp32
         train = read_data(i, size_data_train, slice_length, enc_bits, torch.float32) #
 
@@ -552,7 +420,6 @@ def task_dna():
 
         # Initialize the SOM randomly in fp32
         SOM_init = torch.randn((N, M), dtype=torch.float32)
-        # print(SOM_init)
 
         # convert SOM init to dt[1]
         SOM_init_conv = matrix_init(SOM_init, data_types[1])
@@ -565,23 +432,16 @@ def task_dna():
         # Train the ref SOM in fp32
         dt_fp32 = [torch.float32,torch.float32,torch.float32]
         SOM_ref = train_SOM(SOM_init, train,  dt_fp32, epochs=epoch, mac_flag='false', vec_flag='false', print_flag='false')
-        # print("Training of the SOM %d is finished" % i)
 
         if not check_all_float(data_types): # there is at least one non float32 data type
             # Train the conv SOM
             print(f"Training of the SOM {i} in {data_types} is started")
 
             SOM_res = train_SOM(SOM_init_conv, train_conv, data_types, epochs=epoch, mac_flag=mac_flag,vec_flag=vec_flag, print_flag='true')
-            # print("Training of the SOM %d is finished" % i)
-            # print("SOM res", SOM_res)
             SOMs_res = merge_mats(SOMs_res, SOM_res, N, M, i)
         else:#all data types are float32 and we can use the ref results
             SOM_res = SOM_ref
             SOMs_res = merge_mats(SOMs_res, SOM_ref, N, M, i)
-
-        # Load the test dataset
-        # test = pd.read_csv('test_data.csv', header=None)
-        # test = np.asarray(test)
 
         print("MSE is ", mean_squared_error(SOM_ref, SOM_res).item())
         print(f"quantization_error is {quantization_error(SOM_ref, SOM_res).item()}")
@@ -592,15 +452,7 @@ def task_dna():
         
         score[i] = inference_SOM(SOM_res, test_data, data_types)
 
-        '''for j in range(R):
-            test_data = read_data(j, size_data_test, slice_length, enc_bits, data_types[0])
-            # Calculate the score (SOM inference)
-            score_1[i,j] = inference_SOM(SOM_res, test_data, data_types)
-    print("Final Scores1: \n", score_1)
-    print("The winner SOMs are ", np.argmin(score_1, axis=1))'''
-    # inp_b, weight_b = memory_estimation(N, M, I, R, dt)
     save_data_into_hfile(R, N, M, I, epoch, trains_data, SOMs_res, SOMs_init_conv, test_data, score[0])
-    #print("Final Scores: \n", score)
     print("The target(true) DNA is %d \nThe winner SOM is %d " % (test_DNA, np.argmin(score) ))
 
     
