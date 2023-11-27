@@ -75,7 +75,7 @@ The script will generate floating-point data and a reference output of format `f
 
 ## Running the C code
 ~~~~~shell
-make clean all run
+make clean all run stats=1 check=1 w_block=128 i_block=32 vec=1 cores=1 fmt=FP16 verbose=1  IN_ORDER=1
 ~~~~~
  make clean all run stats=1 check=1 w_block=128 i_block=32  cores=1 fmt=FP16 verbose=1  IN_ORDER=1 
 There are several flags useful to activate some functionalities:
@@ -91,10 +91,6 @@ There are several flags useful to activate some functionalities:
 - `i_block` the tile size of the input
 - `IN_ORDER=1` if you want to use the Vertical Mapping approach. **Please consider that the number of cores should be >1 in the Horizontal mapping mode** 
 
-  For example:
-~~~~~shell
-make clean all run stats=1 check=1 w_block=128 i_block=32 vec=1 cores=1 fmt=FP16 verbose=1  IN_ORDER=1
-~~~~~
  
 
 ## Roadmap
