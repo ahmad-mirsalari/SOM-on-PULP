@@ -282,8 +282,10 @@ int find_BMU_index(Pixel * __restrict__ x, Pixel * __restrict__ SOM_N, int N, in
         #ifdef VECTORIAL
           #ifdef FP8
             temp = (VPixel) {0, 0, 0, 0};
-            // for (int j = 0; j < M ; j+=8) 
-            //   {
+            #if M_g != 8
+            for (int j = 0; j < M ; j+=8)
+            #endif
+            {
               int j =0;
                 Inpv0  = *((VPixel *) &x[x_offset + j]);
                 Sv0  = *((VPixel *) &SOM[ i * M + j]);
@@ -294,7 +296,7 @@ int find_BMU_index(Pixel * __restrict__ x, Pixel * __restrict__ SOM_N, int N, in
                 temp += FABS(Sv0 - Inpv0);
                 temp += FABS(Sv1 - Inpv1);
 
-              //}
+              }
               sum = temp[0] + temp[1] + temp[2] + temp[3];
             if (sum < minimum[core_id]){
 
@@ -321,7 +323,6 @@ int find_BMU_index(Pixel * __restrict__ x, Pixel * __restrict__ SOM_N, int N, in
                 myindex[core_id] =  ( offset) + (i - ((core_id / (ava_cores)) * offset1));
             }
           #endif
-
 
         #else
         temp = 0;
