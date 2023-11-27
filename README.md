@@ -60,7 +60,7 @@ After the platform and the SDK setup, you can run the test.
 If you want to generate a golden model, you can use the [data_generator.py](./data_generator.py) script with the following command:
 
 ~~~~~shell
-./data_generator.py --I=Train_sequence --T=Test_sequence --R=Number_of_SOMs --S=Weights_per_Neuron --N=Neurons --float_type= --MAC_flag=false --vec_flag=false
+./data_generator.py --I=Train_sequence --T=Test_sequence --R=Number_of_Bacteria --S=slice_length --N=Neurons --float_type= --MAC_flag=false --vec_flag=false
 ~~~~~
 
 - specifies the floating-point format for data, by default, it is set to `FP32` but you can also choose `FP16`, `FP16ALT`, and `FP8` formats. **Also, you can run the mixed-precision golden model by using `--float_type=FP_INP,FP_Weight,FP_OUT` (input, SOM weights, output).**
@@ -87,8 +87,8 @@ There are several flags useful to activate some functionalities:
 - `verbose=1` prints the wrong results
 - `stats=1` activates performance measurement
 - `PRINT_RESULTS=1` print outputs of C code
-- `w_block` the tile size of the SOM network
-- `i_block` the tile size of the input
+- `w_block` the tile size of the SOM network (The number of neurons must be divisible by this number)
+- `i_block` the tile size of the input (The number of input must be divisible by this number)
 - `IN_ORDER=1` if you want to use the Vertical Mapping approach. **Please consider that the number of cores should be >1 in the Horizontal mapping mode** 
 
  

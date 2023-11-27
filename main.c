@@ -68,16 +68,6 @@ int __attribute ((noinline)) check_result(Pixel * __restrict__ result, Pixel sco
      }
 
 
-
-
-    // if (score == score_ref)
-    // {
-    //   printf("FP32 TEST PASSED score_ref %f and score of C code is %f \n", score_ref, score);
-    // }
-    // else{
-    //   printf("FP32 TEST FAILED!!!! score_ref %f and score of C code is %f \n", score_ref, score);
-    // }
-  
     if(err != 0)
       #ifndef VECTORIAL
         #ifdef FP32
