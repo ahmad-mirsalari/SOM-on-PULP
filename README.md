@@ -1,4 +1,4 @@
-# SOM
+# Optimizing Self-Organizing Maps for Bacterial Genome Identification on\ Parallel Ultra-Low-Power Platforms
 
 run the C code on cluster:
  make clean all run stats=1 check=1 w_block=128 i_block=32  cores=1 fmt=FP16 verbose=1  IN_ORDER=1 
