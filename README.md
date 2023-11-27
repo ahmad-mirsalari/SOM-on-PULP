@@ -89,7 +89,7 @@ There are several flags useful to activate some functionalities:
 - `PRINT_RESULTS=1` print outputs of C code
 - `w_block` the tile size of the SOM network
 - `i_block` the tile size of the input
-- `IN_ORDER=1` if you want to use the Vertical Mapping approach. 
+- `IN_ORDER=1` if you want to use the Vertical Mapping approach. **Please consider that the number of cores should be >1 in the Horizontal mapping mode** 
 
   For example:
 ~~~~~shell
