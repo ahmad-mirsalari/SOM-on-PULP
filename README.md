@@ -2,7 +2,7 @@
 
 
 ## Get Started
-Each kernel design includes a Python model and a C program. The Python model generates the input dataset, computes the kernel output as a golden reference, and assesses the accuracy using a customizable error metric. Each folder contains a specific test with the golden model generator and a brief description of how to run the test.  
+The kernel design includes a Python model and a C program. The Python model generates the input dataset, computes the kernel output as a golden reference, and assesses the accuracy using a customizable error metric. 
 ### Prerequisites 
 #### Python
 These golden models are built on top of PyTorch data types. The following packages need to be installed:
@@ -63,8 +63,8 @@ If you want to generate a golden model, you can use the [data_generator.py](./da
 ./data_generator.py --I=Train_sequence --T=Test_sequence --R=Number_of_Bacteria --S=slice_length --N=Neurons --float_type= --MAC_flag=false --vec_flag=false
 ~~~~~
 
-- specifies the floating-point format for data, by default, it is set to `FP32` but you can also choose `FP16`, `FP16ALT`, and `FP8` formats. **Also, you can run the mixed-precision golden model by using `--float_type=FP_INP,FP_Weight,FP_OUT` (input, SOM weights, output).**
-- `MAC_flag` is used to emulate the multiply-and-add operator available on most DSP instruction sets for embedded devices. It can be true or false. To emulate `FP16`,  `FP8` and `FP16ALT` behavior on PULP, true this flag.
+- specifies the floating-point format for data; by default, it is set to `FP32`, but you can also choose `FP16`, `FP16ALT`, and `FP8` formats. **Also, you can run the mixed-precision golden model by using `--float_type=FP_INP,FP_Weight,FP_OUT` (input, SOM weights, output).**
+- `MAC_flag` is used to emulate the multiply-and-add operator available on most DSP instruction sets for embedded devices. It can be true or false. To emulate `FP16`,  `FP8`, and `FP16ALT` behavior on PULP, true this flag.
 - vector flag to emulate SIMD vector instructions. It can be true or false. To emulate vectorized `FP16`,  `FP8` and `FP16ALT` behavior on PULP, true this flag.
 - `I` is the number of train data(e.g., 40000)
 - `T` is the number of test data(e.g., 1000)
