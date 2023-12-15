@@ -11,7 +11,7 @@ pip install torch
 ~~~~~
 
 ### Float8|e5m2 
-to support float8 use https://github.com/ahmad-mirsalari/PyTorch_E5M2 
+to support float8 use [our e5m2 implementation](https://github.com/ahmad-mirsalari/PyTorch_E5M2)
 
 Navigate to the root directory of the modified PyTorch codebase in the terminal or command prompt.
 Run the following command to install PyTorch in editable mode:
