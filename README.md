@@ -4,16 +4,35 @@
 ## Get Started
 The kernel design includes a Python model and a C program. The Python model generates the input dataset, computes the kernel output as a golden reference, and assesses the accuracy using a customizable error metric. 
 ### Prerequisites 
+The golden model is built on top of PyTorch data types.
 #### Python
-These golden models are built on top of PyTorch data types. The following packages need to be installed:
+ if you are not going to use float8, the following packages need to be installed:
 ~~~~~shell
 pip install torch 
 ~~~~~
 
 ### Float8|e5m2 
-to support float8 use [our e5m2 implementation](https://github.com/ahmad-mirsalari/PyTorch_E5M2)
 
-Navigate to the root directory of the modified PyTorch codebase in the terminal or command prompt.
+To enable support for float8, utilize [our e5m2 implementation](https://github.com/ahmad-mirsalari/PyTorch_E5M2). Subsequently, proceed with the instructions for installing PyTorch from the source provided in this directory.
+
+We conducted tests using our implementation on the CPU. To replicate our setup, kindly disable CUDA support by exporting the environment variable USE_CUDA=0:
+~~~~~shell
+export USE_CUDA=0
+~~~~~
+
+Please use
+~~~~~shell
+git clone git@github.com:ahmad-mirsalari/PyTorch_E5M2.git
+~~~~~
+instead of
+~~~~~shell
+git clone --recursive https://github.com/pytorch/pytorch 
+~~~~~
+ in the "Get the PyTorch Source" step.
+
+In case you encounter the error "multiple definition of `gloo::rendezvous::Store::kDefaultTimeout'", please refer to the solution outlined in this [GitHub issue](https://github.com/pytorch/pytorch/issues/90448). It's important to note that this issue is unrelated to our implementation.
+
+Once Torch is installed,  navigate to the root directory of the modified PyTorch codebase in the terminal or command prompt.
 Run the following command to install PyTorch in editable mode:
 ~~~~~shell
 pip install -e .
