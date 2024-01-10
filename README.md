@@ -6,12 +6,15 @@ The kernel design includes a Python model and a C program. The Python model gene
 ### Prerequisites 
 The golden model is built on top of PyTorch data types.
 #### Python
+This implementation has been tested and verified with Python 3.10.
+#### PyTorch
+
  if you are not going to use float8, the following packages need to be installed:
 ~~~~~shell
 pip install torch 
 ~~~~~
 
-### Float8|e5m2 
+#### Float8|e5m2 
 
 To enable support for float8, utilize [our e5m2 implementation](https://github.com/ahmad-mirsalari/PyTorch_E5M2). Subsequently, proceed with the instructions for installing PyTorch from the source provided in this directory.
 
